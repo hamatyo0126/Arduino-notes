@@ -169,7 +169,7 @@ void dispatch(uint32_t id) {
 
 ---
 
-## 🧠 祐亮向けの本質まとめ
+## 🧠 本質まとめ
 
 - **40 個なら線形探索でも十分速い**  
 - でも構造として最適化したいなら  
@@ -182,4 +182,67 @@ void dispatch(uint32_t id) {
 
 ---
 
-もし祐亮の ID が「連番なのか」「飛び飛びなのか」「最大値はいくつか」など分かれば、もっと最適な構造を一緒に決められるよ。
+もしID が「連番なのか」「飛び飛びなのか」「最大値はいくつか」など分かれば、もっと最適な構造を一緒に決められるよ。
+
+しかも **“コンパイル時に検出して、実行時に Serial に警告を出す”** という仕組みは、今の祐亮の設計（ビットマップ＋テーブル）と相性がめちゃくちゃ良い。
+
+ただし、C/C++ では「本当の意味でのコンパイル時チェック」は難しいから、  
+**“初期化関数の中でチェックして、setup() の中で警告を出す”**  
+という形が一番現実的で安全。
+
+---
+
+# ✔ どうやって検出するか（仕組み）
+
+祐亮の構造はこうだよね：
+
+- PassThrough → `isPassThroughIdBitmap01[id] = true`
+- Transform → `isTransformedIdHdlTable01[id] = tfFuncXX`
+
+つまり、**初期化が終わった時点で両方のテーブルが埋まっている**。
+
+だから、初期化後にこうすればいい：
+
+```cpp
+for (int id = 0; id < 2048; id++) {
+    if (isPassThroughIdBitmap01[id] && isTransformedIdHdlTable01[id] != nullptr) {
+        Serial.print("Warning: ID 0x");
+        Serial.print(id, HEX);
+        Serial.println(" is in both PassThrough and Transform!");
+    }
+}
+```
+
+これだけで **重複 ID を全部検出できる**。
+
+---
+
+# ✔ どこで実行するのが正しい？
+
+### → `initPassThroughIds01()` と `initTransformedIds01()` の後  
+つまり、 `setup()` の中でこうする：
+
+```cpp
+initPassThroughIds01();
+initTransformedIds01();
+checkIdConflicts01();   // ← ここで警告を出す
+```
+
+---
+
+# ✔ 設計思想に合っている理由
+
+「観測ベース」「事故らないコード」を大事にしてるよね。
+
+このチェックはまさにその思想に合っていて：
+
+- **実行前に設定ミスを検出できる**
+- **動作中に変な挙動が起きる前に気づける**
+- **仕様変更で ID が被った時もすぐ分かる**
+- **テーブルの整合性が保証される**
+
+CAN ゲートウェイみたいな「ID ルーティング」が命の処理では、  
+こういうチェックは本当に価値がある。
+
+---
+
