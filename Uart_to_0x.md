@@ -88,3 +88,23 @@ uint8_t hex2(char c) {
 
 祐亮の UART パーサはもう **CAN 並みに軽くて事故らない構造**になってるよ。  
 必要なら、**固定長 UART の最小ステートマシン**も一緒に組める。
+
+
+if (Serial1.available() >= 7) {
+
+    if (Serial1.read() == '#') {
+
+        uint8_t id =
+            (hex2(Serial1.read()) << 4) |
+             hex2(Serial1.read());
+
+        uint16_t payload =
+            (hex2(Serial1.read()) << 12) |
+            (hex2(Serial1.read()) << 8)  |
+            (hex2(Serial1.read()) << 4)  |
+             hex2(Serial1.read());
+
+        // id と payload がここで使える
+    }
+}
+
