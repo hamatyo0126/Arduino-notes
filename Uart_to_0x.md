@@ -108,3 +108,31 @@ if (Serial1.available() >= 7) {
     }
 }
 
+
+
+
+
+
+// ゴミバイトが先頭にあるなら1バイトだけ捨てる
+if (Serial1.available() > 0 && Serial1.peek() != '#') {
+    Serial1.read();
+}
+
+// '#' + 6バイト が揃っているか確認
+if (Serial1.available() >= 7 && Serial1.peek() == '#') {
+
+    Serial1.read();  // '#' を消費
+
+    uint8_t id =
+        (hex2(Serial1.read()) << 4) |
+         hex2(Serial1.read());
+
+    uint16_t payload =
+        (hex2(Serial1.read()) << 12) |
+        (hex2(Serial1.read()) << 8)  |
+        (hex2(Serial1.read()) << 4)  |
+         hex2(Serial1.read());
+
+    // id と payload がここで使える
+}
+
