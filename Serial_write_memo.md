@@ -216,3 +216,18 @@ void uartSend_min(uint8_t id, uint16_t payload) {
 - Portenta H7 向けの最適化（DCache/I-Cache 前提）  
 
 どこまででも深掘りできるよ。
+
+
+char buf[7];
+
+buf[0] = HEX[id >> 4];
+buf[1] = HEX[id & 0x0F];
+buf[2] = HEX[(payload >> 12) & 0x0F];
+buf[3] = HEX[(payload >> 8)  & 0x0F];
+buf[4] = HEX[(payload >> 4)  & 0x0F];
+buf[5] = HEX[payload & 0x0F];
+buf[6] = '0';
+
+Serial1.write('#');
+Serial1.write(buf, 7);
+
